@@ -2,6 +2,9 @@ import numpy as np
 import cv2 as cv2
 from matplotlib import pyplot as plt
 
+#SHAPE DETECTION ZA IZDVAJANJE LOPTICE - GLEDAJ DA L VRACA CENTRALNU KOORDINATU LOPTICE ILI NEKU IVICU
+#SKONTAJ KAKO DA IZDVOJIS ZIDOVE
+
 # img = cv2.imread('slika.png',5)
 # edges = cv2.Canny(img,100,200)
 
@@ -41,6 +44,7 @@ while(cap.isOpened()):
 
     # Press Q on keyboard to  exit
     if cv2.waitKey(25) & 0xFF == ord('q'):
+
       break
 
   # Break the loop
