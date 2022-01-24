@@ -3,7 +3,15 @@ import cv2 as cv2
 from matplotlib import pyplot as plt
 import os
 
+left_wall_right_edge = ()
+right_wall_left_edge = ()
+top_wall_bottom_edge = ()
+
 def get_walls(frame,edges):
+  global top_wall_bottom_edge
+  global right_wall_left_edge
+  global left_wall_right_edge
+
   indices = np.where(edges != [0])
   coordinates = zip(indices[0], indices[1])
   copy_coords = zip(indices[0], indices[1])
@@ -44,7 +52,6 @@ def get_walls(frame,edges):
   find_left_y = []
   right_wall_top_left_x = height_edges[2]
   right_wall_bottom_left_x = right_wall_top_left_x
-  find_right_y = []
 
   # Copy coords koristim jer iz nekog razloga nece da udje u coordinates
   # Posto znamo X koordinatu, prolazimo kroz sve piksele koji imaju taj X
@@ -107,6 +114,9 @@ def get_walls(frame,edges):
 
 
 def main_func():
+  global top_wall_bottom_edge
+  global right_wall_left_edge
+  global left_wall_right_edge
   os.system('cls')
   cap = cv2.VideoCapture('video1.mp4')
 
@@ -124,6 +134,9 @@ def main_func():
       if(counter == 1):      
         edges = cv2.Canny(frame,300,400)
         get_walls(frame,edges)
+        print(top_wall_bottom_edge)
+        print(right_wall_left_edge)
+        print(left_wall_right_edge)
 
       gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       ret, gray_threshed = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY)
@@ -161,3 +174,7 @@ def main_func():
 
   # Closes all the frames
   cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+  main_func()
