@@ -3,6 +3,8 @@ import cv2 as cv2
 from matplotlib import pyplot as plt
 import os
 
+# https://docs.opencv.org/3.4/d0/d49/tutorial_moments.html
+
 os.system('cls')
 
 # If the input is the camera, pass 0 instead of the video file name
@@ -18,9 +20,23 @@ while(cap.isOpened()):
 
   # Capture frame-by-frame
   ret, frame = cap.read()
+
   height,width,channels = frame.shape
   if ret == True:
     edges = cv2.Canny(frame,300,400)
+
+    #Binarizujemo sliku ?
+    new_ret,thresh = cv2.threshold(edges,127,255,0)
+    M = cv2.moments(thresh)
+    print(M)
+    print("*****")
+    cX = int(M["m20"] / M["m00"])
+    cY = int(M["m20"] / M["m00"])
+    cv2.circle(edges, (cX, cY), 5, (255, 255, 255), -1)
+    cv2.putText(edges, "centroid", (cX - 125, cY - 125),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+
+
     indices = np.where(edges != [0])
     coordinates = zip(indices[0], indices[1])
     copy_coords = zip(indices[0], indices[1])
@@ -121,14 +137,15 @@ while(cap.isOpened()):
 
     top_wall_bottom_edge = (top_wall_left_x,top_wall_y,top_wall_right_x,top_wall_y)
 
-    print(left_wall_right_edge)
-    print(right_wall_left_edge)
-    print(top_wall_bottom_edge)
+    # print(left_wall_right_edge)
+    # print(right_wall_left_edge)
+    # print(top_wall_bottom_edge)
     
     plt.subplot(121),plt.imshow(frame,cmap = 'gray')
     plt.title('Original Image'), plt.xticks([]), plt.yticks([])
     plt.subplot(122),plt.imshow(edges,cmap = 'gray')
     plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+
     if counter % 1 == 0:
         plt.show()
 
