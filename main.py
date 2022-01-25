@@ -6,18 +6,14 @@ import sklearn.metrics as sklearn
 
 left_wall_right_edge = ()
 right_wall_left_edge = ()
-top_wall_bottom_edge = ()
 
 def get_walls(edges):
-  global top_wall_bottom_edge
   global right_wall_left_edge
   global left_wall_right_edge
 
   indices = np.where(edges != [0])
   coordinates = zip(indices[0], indices[1])
   copy_coords = zip(indices[0], indices[1])
-  copy_copy_coords = zip(indices[0], indices[1])
-  copy_copy_copy_coords = zip(indices[0], indices[1])
 
   # Pravimo kontinuitet vertikalnih linija
   vertical_walls = {}
@@ -78,112 +74,82 @@ def get_walls(edges):
   left_wall_right_edge = (left_wall_top_right__x+1,left_wall_top_right_y,left_wall_bottom_right_x+1,left_wall_bottom_right_y)
   right_wall_left_edge = (right_wall_top_left_x-2,right_wall_top_left_y,right_wall_bottom_left_x-2,right_wall_bottom_left_y)
 
-  # Pravimo kontinuitet horizontalnih linija
-  horisontal_walls = {}
-  for i in copy_copy_coords:
-    if i[0] in horisontal_walls.keys():
-        horisontal_walls[i[0]] += 1
-    else:
-        horisontal_walls[i[0]] = 0
-
-  # Dodajemo u listu kako bi lakse sortirali vrednosti
-  horisontal_filter = []
-  for value in horisontal_walls.values():
-    horisontal_filter.append(value)
-  horisontal_filter.sort(reverse=True)
-
-  top_wall_length = horisontal_filter[0]
-  lenght_edges = []
-
-  # Trazimo X koordinate ovih 4 najduza zida
-  for key,value in horisontal_walls.items():
-    if top_wall_length == value:
-      lenght_edges.append(key)
-  top_wall_y = lenght_edges[1]
-
-  x_coords = []
-  for i in copy_copy_copy_coords:
-    if i[0] == top_wall_y:
-      x_coords.append(i[1])
-
-  x_coords.sort()
-  top_wall_left_x = x_coords[0]
-  top_wall_right_x = x_coords[len(x_coords)-1]
-
-  top_wall_bottom_edge = (top_wall_left_x,top_wall_y,top_wall_right_x,top_wall_y)
-
 def main_func():
-  global top_wall_bottom_edge
   global right_wall_left_edge
   global left_wall_right_edge
   os.system('cls')
   
-  cap = cv2.VideoCapture('video1.mp4')
+  my_result = []
+  result = [7,24,18,21,18,10,32,13,15,14]
+  
+  data_file = os.getcwd()+"\\data"
+  print(os.listdir(data_file))
 
-  collision_counter = 0
+  for file in os.listdir(data_file):
+    cap = cv2.VideoCapture("data/"+file+"")
 
-  # Check if camera opened successfully
-  if (cap.isOpened()== False): 
-    print("Error opening video stream or file")
+    if (cap.isOpened()== False): 
+      print("Error opening video stream or file")
 
-  touch = 0
-  counter = 0
-  ball_counter = 0
-  while(cap.isOpened()):
-    counter += 1
-    ball_counter += 1
+    touch = 0
+    counter = 0
+    ball_counter_left = 0
+    ball_counter_right = 0
+    while(cap.isOpened()):
+      counter += 1
+      ball_counter_left += 1
+      ball_counter_right += 1
 
-    # Capture frame-by-frame
-    ret, frame = cap.read()
-    if ret == True:
-      if(counter == 1):      
-        edges = cv2.Canny(frame,300,400)
-        get_walls(edges)
-      
-      img = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY) 
-      ret, img_bin = cv2.threshold(img, 80, 255, cv2.THRESH_BINARY)
-      contours, hierarchy = cv2.findContours(img_bin, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-      img = frame.copy()
+      # Capture frame-by-frame
+      ret, frame = cap.read()
+      if ret == True:
+        if(counter == 1):      
+          edges = cv2.Canny(frame,300,400)
+          get_walls(edges)
+        
+        img = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY) 
+        ret, img_bin = cv2.threshold(img, 80, 255, cv2.THRESH_BINARY)
+        contours, hierarchy = cv2.findContours(img_bin, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        img = frame.copy()
 
-      for contour in contours:
-        ((x, y), radius) = cv2.minEnclosingCircle(contour)
-        #Po frejmu, X se poveca za 4.5 a Y za 9.5
-        if radius > 4 and radius < 5:
-          right_wall_x = right_wall_left_edge[0]
-          left_wall_x = left_wall_right_edge[0]
-          if( right_wall_x - (x+radius)) < 4 and ball_counter > 3:
-            touch += 1
-            print("desna")
-            ball_counter = 0
-          if(abs(left_wall_x - (x-radius))) < 4 and ball_counter > 3:
-            touch += 1
-            print("leva")
-            ball_counter = 0
+        for contour in contours:
+          ((x, y), radius) = cv2.minEnclosingCircle(contour)
+          #Po frejmu, X se poveca za 4.5 a Y za 9.5
+          if radius > 4 and radius < 5:
+            right_wall_x = right_wall_left_edge[0]
+            left_wall_x = left_wall_right_edge[0]
+            if( right_wall_x - (x+radius)) < 5 and ball_counter_left > 2:
+              touch += 1
+              print("desna")
+              ball_counter_left = 0
+            if(abs(left_wall_x - (x-radius))) < 6 and ball_counter_right > 2:
+              touch += 1
+              print("leva")
+              ball_counter_right = 0
 
-      plt.subplot(121),plt.imshow(frame,cmap = 'gray')
-      plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-      plt.subplot(122),plt.imshow(img,cmap = 'gray')
-      plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+        plt.subplot(121),plt.imshow(frame,cmap = 'gray')
+        plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+        plt.subplot(122),plt.imshow(img,cmap = 'gray')
+        plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
 
-      # if counter % 20 == 0:
-      #     plt.show()
+        # Press Q on keyboard to  exit
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+          break
 
-      # Press Q on keyboard to  exit
-      if cv2.waitKey(25) & 0xFF == ord('q'):
+      # Break the loop
+      else: 
         break
 
-    # Break the loop
-    else: 
-      break
+    # When everything done, release the video capture object
+    cap.release()
 
-  # When everything done, release the video capture object
-  cap.release()
+    # Closes all the frames
+    my_result.append(touch)
+    print(touch)
+    cv2.destroyAllWindows()
 
-  # Closes all the frames
-  print("ALAAAAA")
-  print(touch)
-  cv2.destroyAllWindows()
 
+  print("MAE: ",sklearn.mean_absolute_error(result,my_result))
 
 if __name__ == "__main__":
   main_func()
