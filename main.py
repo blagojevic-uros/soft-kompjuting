@@ -80,14 +80,13 @@ def main_func():
   os.system('cls')
   
   my_result = []
-  result = [7,24,18,21,18,10,32,13,15,14]
+  result = [7,18,21,18,10,32,13,15,14,24]
   
   data_file = os.getcwd()+"\\data"
-  print(os.listdir(data_file))
 
   for file in os.listdir(data_file):
     cap = cv2.VideoCapture("data/"+file+"")
-
+    print("OTVOREN :",file)
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
 
@@ -120,11 +119,9 @@ def main_func():
             left_wall_x = left_wall_right_edge[0]
             if( right_wall_x - (x+radius)) < 5 and ball_counter_left > 2:
               touch += 1
-              print("desna")
               ball_counter_left = 0
             if(abs(left_wall_x - (x-radius))) < 6 and ball_counter_right > 2:
               touch += 1
-              print("leva")
               ball_counter_right = 0
 
         plt.subplot(121),plt.imshow(frame,cmap = 'gray')
@@ -142,10 +139,10 @@ def main_func():
 
     # When everything done, release the video capture object
     cap.release()
-
+    
     # Closes all the frames
     my_result.append(touch)
-    print(touch)
+    print("BROJ DODIRA: ",touch)
     cv2.destroyAllWindows()
 
 
