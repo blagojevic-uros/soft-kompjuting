@@ -2,12 +2,13 @@ import numpy as np
 import cv2 as cv2
 from matplotlib import pyplot as plt
 import os
+import sklearn.metrics as sklearn
 
 left_wall_right_edge = ()
 right_wall_left_edge = ()
 top_wall_bottom_edge = ()
 
-def get_walls(frame,edges):
+def get_walls(edges):
   global top_wall_bottom_edge
   global right_wall_left_edge
   global left_wall_right_edge
@@ -74,8 +75,8 @@ def get_walls(frame,edges):
   right_wall_top_left_y = left_wall_top_right_y
   right_wall_bottom_left_y = left_wall_bottom_right_y
 
-  left_wall_right_edge = (left_wall_top_right__x,left_wall_top_right_y,left_wall_bottom_right_x,left_wall_bottom_right_y)
-  right_wall_left_edge = (right_wall_top_left_x,right_wall_top_left_y,right_wall_bottom_left_x,right_wall_bottom_left_y)
+  left_wall_right_edge = (left_wall_top_right__x+1,left_wall_top_right_y,left_wall_bottom_right_x+1,left_wall_bottom_right_y)
+  right_wall_left_edge = (right_wall_top_left_x-2,right_wall_top_left_y,right_wall_bottom_left_x-2,right_wall_bottom_left_y)
 
   # Pravimo kontinuitet horizontalnih linija
   horisontal_walls = {}
@@ -111,55 +112,61 @@ def get_walls(frame,edges):
 
   top_wall_bottom_edge = (top_wall_left_x,top_wall_y,top_wall_right_x,top_wall_y)
 
-
-
 def main_func():
   global top_wall_bottom_edge
   global right_wall_left_edge
   global left_wall_right_edge
   os.system('cls')
+  
   cap = cv2.VideoCapture('video1.mp4')
+
+  collision_counter = 0
 
   # Check if camera opened successfully
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
 
+  touch = 0
   counter = 0
+  ball_counter = 0
   while(cap.isOpened()):
     counter += 1
+    ball_counter += 1
 
     # Capture frame-by-frame
     ret, frame = cap.read()
     if ret == True:
       if(counter == 1):      
         edges = cv2.Canny(frame,300,400)
-        get_walls(frame,edges)
-        print(top_wall_bottom_edge)
-        print(right_wall_left_edge)
-        print(left_wall_right_edge)
+        get_walls(edges)
+      
+      img = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY) 
+      ret, img_bin = cv2.threshold(img, 80, 255, cv2.THRESH_BINARY)
+      contours, hierarchy = cv2.findContours(img_bin, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+      img = frame.copy()
 
-      gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-      ret, gray_threshed = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY)
-      bilateral_filtered_image = cv2.bilateralFilter(gray_threshed, 5, 175, 175)
-      edges = cv2.Canny(bilateral_filtered_image, 230, 250)
+      for contour in contours:
+        ((x, y), radius) = cv2.minEnclosingCircle(contour)
+        #Po frejmu, X se poveca za 4.5 a Y za 9.5
+        if radius > 4 and radius < 5:
+          right_wall_x = right_wall_left_edge[0]
+          left_wall_x = left_wall_right_edge[0]
+          if( right_wall_x - (x+radius)) < 4 and ball_counter > 3:
+            touch += 1
+            print("desna")
+            ball_counter = 0
+          if(abs(left_wall_x - (x-radius))) < 4 and ball_counter > 3:
+            touch += 1
+            print("leva")
+            ball_counter = 0
 
-      # #Binarizujemo sliku ?
-      # new_ret,thresh = cv2.threshold(edges,127,255,0)
-      # im2, contours = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-      # for c in contours:
-      #   M = cv2.moments(c)
-      #   cX = int(M["m10"] / M["m00"])
-      #   cY = int(M["m01"] / M["m00"])
-      #   cv2.circle(edges, (cX, cY), 5, (255, 255, 255), -1)
-      #   cv2.putText(edges, "centroid", (cX - 25, cY - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
- 
       plt.subplot(121),plt.imshow(frame,cmap = 'gray')
       plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-      plt.subplot(122),plt.imshow(edges,cmap = 'gray')
+      plt.subplot(122),plt.imshow(img,cmap = 'gray')
       plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
 
-      if counter % 50 == 0:
-          plt.show()
+      # if counter % 20 == 0:
+      #     plt.show()
 
       # Press Q on keyboard to  exit
       if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -173,6 +180,8 @@ def main_func():
   cap.release()
 
   # Closes all the frames
+  print("ALAAAAA")
+  print(touch)
   cv2.destroyAllWindows()
 
 
