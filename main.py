@@ -79,74 +79,71 @@ def main_func():
   global left_wall_right_edge
   os.system('cls')
   
+  # Ukoliko se pokrece pojedinacno resenje, dodati u my_result listu resenja i otkomentarisati 85 i 86 liniju
   my_result = []
   result = [7,18,21,18,10,32,13,15,14,24]
-  
-  data_file = os.getcwd()+"\\data"
+  # print("MAE: ",sklearn.mean_absolute_error(result,my_result))
+  # return
 
-  for file in os.listdir(data_file):
-    cap = cv2.VideoCapture("data/"+file+"")
-    print("OTVOREN :",file)
-    if (cap.isOpened()== False): 
-      print("Error opening video stream or file")
+  cap = cv2.VideoCapture("data/video1.mp4")
+  if (cap.isOpened()== False): 
+    print("Error opening video stream or file")
 
-    touch = 0
-    counter = 0
-    ball_counter_left = 0
-    ball_counter_right = 0
-    while(cap.isOpened()):
-      counter += 1
-      ball_counter_left += 1
-      ball_counter_right += 1
+  touch = 0
+  counter = 0
+  ball_counter_left = 0
+  ball_counter_right = 0
+  while(cap.isOpened()):
+    counter += 1
+    ball_counter_left += 1
+    ball_counter_right += 1
 
-      # Capture frame-by-frame
-      ret, frame = cap.read()
-      if ret == True:
-        if(counter == 1):      
-          edges = cv2.Canny(frame,300,400)
-          get_walls(edges)
-        
-        img = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY) 
-        ret, img_bin = cv2.threshold(img, 80, 255, cv2.THRESH_BINARY)
-        contours, hierarchy = cv2.findContours(img_bin, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        img = frame.copy()
+    # Capture frame-by-frame
+    ret, frame = cap.read()
+    if ret == True:
+      if(counter == 1):      
+        edges = cv2.Canny(frame,300,400)
+        get_walls(edges)
+      
+      img = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY) 
+      ret, img_bin = cv2.threshold(img, 80, 255, cv2.THRESH_BINARY)
+      contours, hierarchy = cv2.findContours(img_bin, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+      img = frame.copy()
 
-        for contour in contours:
-          ((x, y), radius) = cv2.minEnclosingCircle(contour)
-          #Po frejmu, X se poveca za 4.5 a Y za 9.5
-          if radius > 4 and radius < 5:
-            right_wall_x = right_wall_left_edge[0]
-            left_wall_x = left_wall_right_edge[0]
-            if( right_wall_x - (x+radius)) < 5 and ball_counter_left > 2:
-              touch += 1
-              ball_counter_left = 0
-            if(abs(left_wall_x - (x-radius))) < 6 and ball_counter_right > 2:
-              touch += 1
-              ball_counter_right = 0
+      for contour in contours:
+        ((x, y), radius) = cv2.minEnclosingCircle(contour)
+        #Po frejmu, X se poveca za 4.5 a Y za 9.5
+        if radius > 4 and radius < 5:
+          right_wall_x = right_wall_left_edge[0]
+          left_wall_x = left_wall_right_edge[0]
+          if( right_wall_x - (x+radius)) < 5 and ball_counter_left > 2:
+            touch += 1
+            ball_counter_left = 0
+          if(abs(left_wall_x - (x-radius))) < 6 and ball_counter_right > 2:
+            touch += 1
+            ball_counter_right = 0
 
-        plt.subplot(121),plt.imshow(frame,cmap = 'gray')
-        plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-        plt.subplot(122),plt.imshow(img,cmap = 'gray')
-        plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+      plt.subplot(121),plt.imshow(frame,cmap = 'gray')
+      plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+      plt.subplot(122),plt.imshow(img,cmap = 'gray')
+      plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
 
-        # Press Q on keyboard to  exit
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-          break
-
-      # Break the loop
-      else: 
+      # Press Q on keyboard to  exit
+      if cv2.waitKey(25) & 0xFF == ord('q'):
         break
 
-    # When everything done, release the video capture object
-    cap.release()
-    
-    # Closes all the frames
-    my_result.append(touch)
-    print("BROJ DODIRA: ",touch)
-    cv2.destroyAllWindows()
+    # Break the loop
+    else: 
+      break
 
+  # When everything done, release the video capture object
+  cap.release()
+  
+  # Closes all the frames
+  my_result.append(touch)
+  print("BROJ DODIRA: ",touch)
+  cv2.destroyAllWindows()
 
-  print("MAE: ",sklearn.mean_absolute_error(result,my_result))
 
 if __name__ == "__main__":
   main_func()
